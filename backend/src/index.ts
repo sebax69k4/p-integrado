@@ -1,5 +1,4 @@
 import type { Core } from '@strapi/strapi';
-import seed from './bootstrap-seed';
 
 export default {
   /**
@@ -17,8 +16,7 @@ export default {
    * This gives you an opportunity to set up your data model,
    * run jobs, or perform some special logic.
    */
-  async bootstrap({ strapi }: { strapi: Core.Strapi }) {
-    // Ejecutar seed de datos de prueba
-    await seed({ strapi });
+  async bootstrap(/* { strapi }: { strapi: Core.Strapi } */) {
+    // Bootstrap vacío - sin datos de prueba
   },
 };

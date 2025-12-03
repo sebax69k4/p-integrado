@@ -2,13 +2,17 @@ import { useStore } from '@nanostores/react';
 import { isCartOpen, cartItems } from '../../stores/cartStore';
 import { formatCurrency } from '../../lib/utils';
 
+const IVA_RATE = 0.19;
+
 export default function CartFlyout() {
   const $isCartOpen = useStore(isCartOpen);
   const $cartItems = useStore(cartItems);
 
   if (!$isCartOpen) return null;
 
-  const total = $cartItems.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+  const neto = $cartItems.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+  const iva = Math.round(neto * IVA_RATE);
+  const total = neto + iva;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -48,9 +52,19 @@ export default function CartFlyout() {
           )}
         </div>
         <div className="p-4 border-t">
-          <div className="flex justify-between mb-3">
-            <span className="font-medium">Total:</span>
-            <span className="font-bold text-blue-600">{formatCurrency(total)}</span>
+          <div className="space-y-1 text-sm mb-3">
+            <div className="flex justify-between text-gray-600">
+              <span>Neto:</span>
+              <span>{formatCurrency(neto)}</span>
+            </div>
+            <div className="flex justify-between text-gray-600">
+              <span>IVA (19%):</span>
+              <span>{formatCurrency(iva)}</span>
+            </div>
+            <div className="flex justify-between font-bold text-base pt-1 border-t">
+              <span>Total:</span>
+              <span className="text-blue-600">{formatCurrency(total)}</span>
+            </div>
           </div>
           <a 
             href="/carrito" 

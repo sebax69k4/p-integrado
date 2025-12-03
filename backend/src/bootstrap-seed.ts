@@ -88,7 +88,14 @@ export default async ({ strapi }: { strapi: Core.Strapi }) => {
 
     // Asignar permisos a Authenticated
     if (authenticatedRole) {
-      for (const permission of productPermissions) {
+      const authenticatedPermissions = [
+        ...productPermissions,
+        { action: 'api::pedido.pedido.create' },
+        { action: 'api::pedido.pedido.find' },
+        { action: 'api::pedido.pedido.findOne' },
+      ];
+
+      for (const permission of authenticatedPermissions) {
         const existing = await strapi.db.query('plugin::users-permissions.permission').findOne({
           where: { action: permission.action, role: authenticatedRole.id }
         });
@@ -101,139 +108,35 @@ export default async ({ strapi }: { strapi: Core.Strapi }) => {
     }
     strapi.log.info('✅ Permisos de productos asignados a Public y Authenticated');
 
-    // --- CREAR ROL ADMIN Y USUARIO ADMIN (SIEMPRE EJECUTAR) ---
-    strapi.log.info('🛡️ Verificando rol Admin...');
-
-    let adminRole = await strapi.db.query('plugin::users-permissions.role').findOne({
-      where: { type: 'admin' }
-    });
-
-    if (!adminRole) {
-      strapi.log.info('⚙️ Creando rol Admin...');
-      adminRole = await strapi.db.query('plugin::users-permissions.role').create({
-        data: {
-          name: 'Admin',
-          description: 'Administrador del Frontend',
-          type: 'admin',
-        }
-      });
-
-      // Asignar permisos al rol Admin
-      const permissions = [
-        // User Validation
-        { action: 'api::user-validation.user-validation.approve' },
-        { action: 'api::user-validation.user-validation.reject' },
-        // Users Permissions
-        { action: 'plugin::users-permissions.user.find' },
-        { action: 'plugin::users-permissions.user.findOne' },
-        { action: 'plugin::users-permissions.user.me' },
-        // Productos (Lectura)
-        { action: 'api::producto.producto.find' },
-        { action: 'api::producto.producto.findOne' },
-      ];
-
-      for (const permission of permissions) {
-        await strapi.db.query('plugin::users-permissions.permission').create({
-          data: {
-            action: permission.action,
-            role: adminRole.id,
-          }
-        });
-      }
-      strapi.log.info('✅ Rol Admin creado con permisos');
-    }
-
-    // Crear usuario Admin
-    const existingAdmin = await strapi.db.query('plugin::users-permissions.user').findOne({
-      where: { email: 'admin@ecoformarket.cl' }
-    });
-
-    if (!existingAdmin) {
-      const userService = strapi.service('plugin::users-permissions.user') as any;
-      await strapi.db.query('plugin::users-permissions.user').create({
-        data: {
-          username: 'admin',
-          email: 'admin@ecoformarket.cl',
-          password: await userService.hashPassword('Admin1234!'),
-          confirmed: true,
-          blocked: false,
-          role: adminRole.id,
-          rut: '11.111.111-1',
-          razon_social: 'Administrador Sistema',
-          direccion: 'Oficina Central',
-          telefono: '+56900000000',
-          tipo_persona: 'Natural',
-          validado_por_admin: true,
-          estado: 'activo',
-        }
-      });
-      strapi.log.info('✅ Usuario admin@ecoformarket.cl creado (pass: Admin1234!)');
-    }
-
     // --- CREAR PRODUCTOS (SOLO SI NO EXISTEN) ---
-    // Verificar si ya hay productos
-    const existingProducts = await strapi.documents('api::producto.producto').findMany({
+    // Verificar si ya hay productos usando Query Engine (más bajo nivel)
+    const existingProducts = await strapi.db.query('api::producto.producto').findMany({
       limit: 1,
     });
 
+    strapi.log.info(`📊 Productos encontrados en DB: ${existingProducts.length}`);
+
     if (existingProducts.length > 0) {
       strapi.log.info('✅ Ya existen productos en la base de datos');
-      return;
-    }
-
-    strapi.log.info('📦 Creando productos de prueba...');
-
-    let created = 0;
-    for (const producto of productos) {
-      try {
-        await strapi.documents('api::producto.producto').create({
-          data: {
-            ...producto,
-            publishedAt: new Date(),
-          },
-        });
-        created++;
-      } catch (error: any) {
-        strapi.log.warn(`Error creando ${producto.sku}: ${error.message}`);
-      }
-    }
-
-    strapi.log.info(`✅ ${created} productos creados correctamente`);
-
-    // Crear usuario de prueba
-    strapi.log.info('👥 Creando usuario de prueba...');
-
-    const existingUser = await strapi.db.query('plugin::users-permissions.user').findOne({
-      where: { email: 'empresa@demo.cl' }
-    });
-
-    if (!existingUser) {
-      const defaultRole = await strapi.db.query('plugin::users-permissions.role').findOne({
-        where: { type: 'authenticated' }
-      });
-
-      const userService = strapi.service('plugin::users-permissions.user') as any;
-
-      await strapi.db.query('plugin::users-permissions.user').create({
-        data: {
-          username: 'empresa_demo',
-          email: 'empresa@demo.cl',
-          password: await userService.hashPassword('Demo1234!'),
-          confirmed: true,
-          blocked: false,
-          role: defaultRole.id,
-          rut: '76.123.456-7',
-          razon_social: 'Empresa Demo SpA',
-          giro: 'Venta de productos varios',
-          direccion: 'Av. Providencia 1234, Santiago',
-          telefono: '+56912345678',
-          tipo_persona: 'Empresa',
-          validado_por_admin: true,
-        }
-      });
-      strapi.log.info('✅ Usuario empresa@demo.cl creado (validado)');
     } else {
-      strapi.log.info('✅ Usuario de prueba ya existe');
+      strapi.log.info('📦 Base de datos vacía de productos. Iniciando creación...');
+
+      let created = 0;
+      for (const producto of productos) {
+        try {
+          await strapi.documents('api::producto.producto').create({
+            data: {
+              ...producto,
+              publishedAt: new Date(),
+            },
+            status: 'published', // Forzar estado publicado en v5
+          });
+          created++;
+        } catch (error: any) {
+          strapi.log.warn(`Error creando ${producto.sku}: ${error.message}`);
+        }
+      }
+      strapi.log.info(`✅ ${created} productos creados correctamente`);
     }
 
     strapi.log.info('🎉 Seed completado!');

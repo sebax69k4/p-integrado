@@ -4,6 +4,7 @@ import CartList from '../components/cart/CartList.jsx';
 import { formatCurrency } from '../lib/utils';
 
 const MIN_ORDER_AMOUNT = 35000;
+const IVA_RATE = 0.19;
 const user = Astro.locals.user;
 ---
 
@@ -18,22 +19,36 @@ const user = Astro.locals.user;
     <div class="lg:col-span-1">
       <div class="bg-white p-6 rounded-lg shadow-sm sticky top-4">
         <h2 class="text-lg font-semibold mb-4">Resumen</h2>
-        <div class="flex justify-between mb-2">
-          <span>Subtotal</span>
-          <span id="cart-subtotal">$0</span>
+        
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Neto</span>
+            <span id="cart-neto">$0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">IVA (19%)</span>
+            <span id="cart-iva">$0</span>
+          </div>
         </div>
+        
         <div class="border-t pt-4 mt-4">
           <div class="flex justify-between font-bold text-lg">
             <span>Total</span>
-            <span id="cart-total">$0</span>
+            <span id="cart-total" class="text-blue-600">$0</span>
           </div>
         </div>
         
         <div id="min-order-warning" class="hidden mt-4 p-3 bg-yellow-100 text-yellow-700 text-sm rounded">
-          El monto mínimo de compra es {formatCurrency(MIN_ORDER_AMOUNT)}
+          <p class="font-semibold">Pedido mínimo: {formatCurrency(MIN_ORDER_AMOUNT)} (neto)</p>
+          <p>Te faltan <span id="falta-minimo">$0</span> para realizar tu pedido</p>
+        </div>
+        
+        <div id="min-order-success" class="hidden mt-4 p-3 bg-green-100 text-green-700 text-sm rounded">
+          <p class="font-semibold">✓ ¡Pedido listo!</p>
+          <p>Cumples con el mínimo de compra</p>
         </div>
 
-        <a href="/checkout" id="checkout-btn" class="block w-full bg-blue-600 text-white text-center py-3 rounded mt-6 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+        <a href="/checkout" id="checkout-btn" class="block w-full bg-blue-600 text-white text-center py-3 rounded mt-6 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold">
           Proceder al Pago
         </a>
       </div>
@@ -45,32 +60,44 @@ const user = Astro.locals.user;
     import { formatCurrency } from '../lib/utils';
 
     const MIN_ORDER_AMOUNT = 35000;
+    const IVA_RATE = 0.19;
+    
     const checkoutBtn = document.getElementById('checkout-btn');
     const warningMsg = document.getElementById('min-order-warning');
-    const subtotalEl = document.getElementById('cart-subtotal');
+    const successMsg = document.getElementById('min-order-success');
+    const netoEl = document.getElementById('cart-neto');
+    const ivaEl = document.getElementById('cart-iva');
     const totalEl = document.getElementById('cart-total');
+    const faltaMinimoEl = document.getElementById('falta-minimo');
 
     function updateCartSummary() {
       const items = cartItems.get() as CartItem[];
-      const total = items.reduce((acc: number, item: CartItem) => acc + (item.precio * item.cantidad), 0);
+      const neto = items.reduce((acc: number, item: CartItem) => acc + (item.precio * item.cantidad), 0);
+      const iva = Math.round(neto * IVA_RATE);
+      const total = neto + iva;
       
-      if (subtotalEl) subtotalEl.textContent = formatCurrency(total);
+      if (netoEl) netoEl.textContent = formatCurrency(neto);
+      if (ivaEl) ivaEl.textContent = formatCurrency(iva);
       if (totalEl) totalEl.textContent = formatCurrency(total);
 
-      if (total < MIN_ORDER_AMOUNT && items.length > 0) {
+      if (neto < MIN_ORDER_AMOUNT && items.length > 0) {
+        const falta = MIN_ORDER_AMOUNT - neto;
+        if (faltaMinimoEl) faltaMinimoEl.textContent = formatCurrency(falta);
         checkoutBtn?.setAttribute('disabled', 'true');
         checkoutBtn?.classList.add('pointer-events-none', 'opacity-50');
         warningMsg?.classList.remove('hidden');
-      } else {
+        successMsg?.classList.add('hidden');
+      } else if (items.length > 0) {
         checkoutBtn?.removeAttribute('disabled');
         checkoutBtn?.classList.remove('pointer-events-none', 'opacity-50');
         warningMsg?.classList.add('hidden');
-      }
-
-      // Si no hay items, deshabilitar también
-      if (items.length === 0) {
+        successMsg?.classList.remove('hidden');
+      } else {
+        // Carrito vacío
         checkoutBtn?.setAttribute('disabled', 'true');
         checkoutBtn?.classList.add('pointer-events-none', 'opacity-50');
+        warningMsg?.classList.add('hidden');
+        successMsg?.classList.add('hidden');
       }
     }
 

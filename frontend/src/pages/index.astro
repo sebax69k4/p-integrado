@@ -13,10 +13,12 @@ const familia = Astro.url.searchParams.get('familia');
 
 // Fetch products from Strapi
 let products: Producto[] = [];
+let fetchError = '';
 try {
   const query: Record<string, string> = {
     'populate': 'imagen',
     'pagination[pageSize]': '100',
+    'status': 'draft', // Incluir drafts en desarrollo
   };
   
   // Filtrar por familia si está presente
@@ -33,9 +35,10 @@ try {
   if (!Array.isArray(products)) {
     products = [];
   }
-} catch (error) {
+} catch (error: any) {
   console.error("Error fetching products:", error);
   products = [];
+  fetchError = error.message;
 }
 const userPriceList = user?.lista_precios || 'estandar';
 ---
@@ -51,6 +54,12 @@ const userPriceList = user?.lista_precios || 'estandar';
   ) : (
     <div class="text-center py-12">
       <p class="text-gray-500">No hay productos disponibles en este momento.</p>
+      {import.meta.env.DEV && (
+        <div class="mt-4 p-4 bg-red-100 text-red-700 rounded text-left mx-auto max-w-lg overflow-auto">
+          <p class="font-bold">Debug Info:</p>
+          <pre class="text-xs">{JSON.stringify({ error: fetchError || "Unknown error", details: products }, null, 2)}</pre>
+        </div>
+      )}
     </div>
   )}
 </MainLayout>

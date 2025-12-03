@@ -3,6 +3,7 @@ import MainLayout from '../layouts/MainLayout.astro';
 import { formatCurrency } from '../lib/utils';
 
 const user = Astro.locals.user;
+const IVA_RATE = 0.19;
 
 // Si no hay usuario, el middleware ya redirigió
 ---
@@ -72,21 +73,25 @@ const user = Astro.locals.user;
       <div class="bg-white p-6 rounded-lg shadow-sm sticky top-4">
         <h2 class="text-lg font-semibold mb-4">Total a Pagar</h2>
         
-        <div class="space-y-2 mb-4">
+        <div class="space-y-2 text-sm">
           <div class="flex justify-between">
-            <span>Subtotal</span>
-            <span id="checkout-subtotal">$0</span>
+            <span class="text-gray-600">Neto</span>
+            <span id="checkout-neto">$0</span>
           </div>
-          <div class="flex justify-between text-sm text-gray-500">
+          <div class="flex justify-between">
+            <span class="text-gray-600">IVA (19%)</span>
+            <span id="checkout-iva">$0</span>
+          </div>
+          <div class="flex justify-between text-gray-400 text-xs">
             <span>Envío</span>
             <span>Por definir</span>
           </div>
         </div>
         
-        <div class="border-t pt-4">
+        <div class="border-t pt-4 mt-4">
           <div class="flex justify-between font-bold text-lg">
             <span>Total</span>
-            <span id="checkout-total">$0</span>
+            <span id="checkout-total" class="text-blue-600">$0</span>
           </div>
         </div>
         
@@ -122,8 +127,11 @@ const user = Astro.locals.user;
     import { cartItems, clearCart, type CartItem } from '../stores/cartStore';
     import { formatCurrency } from '../lib/utils';
 
+    const IVA_RATE = 0.19;
+    
     const orderItemsContainer = document.getElementById('order-items');
-    const subtotalEl = document.getElementById('checkout-subtotal');
+    const netoEl = document.getElementById('checkout-neto');
+    const ivaEl = document.getElementById('checkout-iva');
     const totalEl = document.getElementById('checkout-total');
     const confirmBtn = document.getElementById('confirm-order-btn') as HTMLButtonElement;
     const direccionInput = document.getElementById('direccion-envio') as HTMLInputElement;
@@ -138,9 +146,12 @@ const user = Astro.locals.user;
         return;
       }
 
-      const total = items.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+      const neto = items.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+      const iva = Math.round(neto * IVA_RATE);
+      const total = neto + iva;
       
-      if (subtotalEl) subtotalEl.textContent = formatCurrency(total);
+      if (netoEl) netoEl.textContent = formatCurrency(neto);
+      if (ivaEl) ivaEl.textContent = formatCurrency(iva);
       if (totalEl) totalEl.textContent = formatCurrency(total);
 
       if (orderItemsContainer) {
@@ -187,7 +198,9 @@ const user = Astro.locals.user;
           subtotal: item.precio * item.cantidad,
         }));
 
-        const total = pedidoItems.reduce((acc, item) => acc + item.subtotal, 0);
+        const neto = pedidoItems.reduce((acc, item) => acc + item.subtotal, 0);
+        const iva = Math.round(neto * IVA_RATE);
+        const total = neto + iva;
 
         const response = await fetch('/api/pedidos', {
           method: 'POST',
@@ -196,6 +209,8 @@ const user = Astro.locals.user;
           },
           body: JSON.stringify({
             items: pedidoItems,
+            neto,
+            iva,
             total,
             direccion_envio: direccion,
           }),

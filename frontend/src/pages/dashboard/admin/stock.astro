@@ -1,5 +1,8 @@
 ---
 import MainLayout from '../../../layouts/MainLayout.astro';
+
+// Obtener fecha de hoy en formato YYYY-MM-DD
+const today = new Date().toISOString().split('T')[0];
 ---
 
 <MainLayout title="Stock / Laudus | Admin">
@@ -25,10 +28,10 @@ import MainLayout from '../../../layouts/MainLayout.astro';
     <div class="md:col-span-3 space-y-6">
       <!-- Importar Stock -->
       <div class="bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-xl font-semibold mb-4">📤 Importar Stock desde Laudus</h2>
+        <h2 class="text-xl font-semibold mb-4">📤 Importar Stock desde CSV</h2>
         <p class="text-gray-600 mb-4">
-          Sube un archivo CSV exportado desde Laudus para actualizar el stock de productos.
-          El archivo debe contener las columnas: <code class="bg-gray-100 px-1">sku, stock</code>
+          Sube un archivo CSV para actualizar el stock de productos masivamente.
+          El archivo debe contener las columnas: <code class="bg-gray-100 px-1 rounded">sku</code> y <code class="bg-gray-100 px-1 rounded">stock</code>
         </p>
         
         <form id="importForm" class="space-y-4">
@@ -58,6 +61,7 @@ import MainLayout from '../../../layouts/MainLayout.astro';
         <div id="importResult" class="mt-4 hidden">
           <div class="p-4 rounded-lg">
             <p id="importMessage"></p>
+            <ul id="importErrors" class="mt-2 text-sm list-disc list-inside"></ul>
           </div>
         </div>
       </div>
@@ -66,26 +70,74 @@ import MainLayout from '../../../layouts/MainLayout.astro';
       <div class="bg-white rounded-lg shadow-sm p-6">
         <h2 class="text-xl font-semibold mb-4">📥 Exportar Pedidos para Laudus</h2>
         <p class="text-gray-600 mb-4">
-          Descarga un archivo CSV con los pedidos para importar en Laudus.
+          Descarga archivos CSV con los pedidos para importar en Laudus.
         </p>
         
-        <div class="flex flex-wrap gap-4">
-          <a 
-            href="/api/admin/exportar-pedidos?estado=Facturado"
-            class="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
-          >
-            Exportar Facturados
-          </a>
-          <a 
-            href="/api/admin/exportar-pedidos"
-            class="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-          >
-            Exportar Todos
-          </a>
+        <div class="space-y-4">
+          <!-- Exportar por estado -->
+          <div>
+            <h3 class="font-medium text-gray-700 mb-2">Por Estado</h3>
+            <div class="flex flex-wrap gap-3">
+              <a 
+                href="/api/admin/exportar-pedidos?estado=Recibido"
+                class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors text-sm"
+              >
+                📋 Recibidos
+              </a>
+              <a 
+                href="/api/admin/exportar-pedidos?estado=En preparacion"
+                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm"
+              >
+                📦 En Preparación
+              </a>
+              <a 
+                href="/api/admin/exportar-pedidos?estado=Facturado"
+                class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm"
+              >
+                🧾 Facturados
+              </a>
+              <a 
+                href="/api/admin/exportar-pedidos?estado=Despachado"
+                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
+              >
+                🚚 Despachados
+              </a>
+            </div>
+          </div>
+          
+          <!-- Exportar con detalle -->
+          <div>
+            <h3 class="font-medium text-gray-700 mb-2">Con Detalle de Productos</h3>
+            <div class="flex flex-wrap gap-3">
+              <a 
+                href="/api/admin/exportar-pedidos?detalle=true"
+                class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors text-sm"
+              >
+                📄 Todos (con items)
+              </a>
+              <a 
+                href="/api/admin/exportar-pedidos?estado=Facturado&detalle=true"
+                class="px-4 py-2 bg-purple-700 text-white rounded hover:bg-purple-800 transition-colors text-sm"
+              >
+                🧾 Facturados (con items)
+              </a>
+            </div>
+          </div>
+          
+          <!-- Exportar todos -->
+          <div>
+            <h3 class="font-medium text-gray-700 mb-2">Exportar Todo</h3>
+            <a 
+              href="/api/admin/exportar-pedidos"
+              class="inline-block px-6 py-2 bg-gray-700 text-white rounded hover:bg-gray-800 transition-colors"
+            >
+              📊 Exportar Todos los Pedidos
+            </a>
+          </div>
         </div>
       </div>
       
-      <!-- Estadísticas rápidas -->
+      <!-- Formato de archivos -->
       <div class="bg-white rounded-lg shadow-sm p-6">
         <h2 class="text-xl font-semibold mb-4">📊 Formato de Archivos</h2>
         <div class="grid md:grid-cols-2 gap-6">
@@ -97,9 +149,15 @@ PRD-002,75
 PRD-003,200</pre>
           </div>
           <div>
-            <h3 class="font-medium mb-2">CSV de Exportación (Pedidos)</h3>
-            <pre class="bg-gray-100 p-3 rounded text-sm overflow-x-auto">ticket,cliente,rut,total,estado,fecha
-TKT-001,Empresa SA,12345678-9,50000,Facturado,2024-01-15</pre>
+            <h3 class="font-medium mb-2">CSV de Exportación (Resumen)</h3>
+            <pre class="bg-gray-100 p-3 rounded text-sm overflow-x-auto">ticket,cliente,rut,email,direccion,total,estado,fecha
+TKT-001,Empresa SA,12345678-9,email@...,Direccion,50000,Facturado,2024-01-15</pre>
+          </div>
+          <div class="md:col-span-2">
+            <h3 class="font-medium mb-2">CSV de Exportación (Detalle de Items)</h3>
+            <pre class="bg-gray-100 p-3 rounded text-sm overflow-x-auto">ticket,sku,producto,cantidad,precio_unitario,subtotal
+TKT-001,PRD-001,Producto A,5,10000,50000
+TKT-001,PRD-002,Producto B,3,8000,24000</pre>
           </div>
         </div>
       </div>
@@ -111,11 +169,16 @@ TKT-001,Empresa SA,12345678-9,50000,Facturado,2024-01-15</pre>
   const importForm = document.getElementById('importForm') as HTMLFormElement;
   const importResult = document.getElementById('importResult');
   const importMessage = document.getElementById('importMessage');
+  const importErrors = document.getElementById('importErrors');
   
   importForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const formData = new FormData(importForm);
+    const submitBtn = importForm.querySelector('button[type="submit"]') as HTMLButtonElement;
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Importando...';
     
     try {
       const response = await fetch('/api/admin/importar-stock', {
@@ -131,11 +194,19 @@ TKT-001,Empresa SA,12345678-9,50000,Facturado,2024-01-15</pre>
         if (response.ok) {
           importResult.querySelector('div')?.classList.remove('bg-red-100', 'text-red-800');
           importResult.querySelector('div')?.classList.add('bg-green-100', 'text-green-800');
-          importMessage.textContent = `✓ ${result.message}. Productos actualizados: ${result.updated || 0}`;
+          importMessage.textContent = `✓ Importación completada. Productos actualizados: ${result.updated || 0}`;
+          
+          // Mostrar errores si los hay
+          if (importErrors && result.errors && result.errors.length > 0) {
+            importErrors.innerHTML = result.errors.map((err: string) => `<li>${err}</li>`).join('');
+          } else if (importErrors) {
+            importErrors.innerHTML = '';
+          }
         } else {
           importResult.querySelector('div')?.classList.remove('bg-green-100', 'text-green-800');
           importResult.querySelector('div')?.classList.add('bg-red-100', 'text-red-800');
           importMessage.textContent = `✗ Error: ${result.error || 'Error desconocido'}`;
+          if (importErrors) importErrors.innerHTML = '';
         }
       }
     } catch (error) {
@@ -145,6 +216,9 @@ TKT-001,Empresa SA,12345678-9,50000,Facturado,2024-01-15</pre>
         importResult.querySelector('div')?.classList.add('bg-red-100', 'text-red-800');
         importMessage.textContent = '✗ Error de conexión';
       }
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Importar Stock';
     }
   });
 </script>
