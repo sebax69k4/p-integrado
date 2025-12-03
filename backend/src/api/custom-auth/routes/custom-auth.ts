@@ -1,0 +1,14 @@
+export default {
+    routes: [
+        {
+            method: 'POST',
+            path: '/custom-auth/register',
+            handler: 'custom-auth.register',
+            config: {
+                auth: false, // Public endpoint
+                policies: [],
+                middlewares: [],
+            },
+        },
+    ],
+};

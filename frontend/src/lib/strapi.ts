@@ -77,11 +77,11 @@ export async function createPedido(token: string, pedidoData: {
       Authorization: `Bearer ${token}`,
     },
   });
-  
+
   if (!userRes.ok) {
     throw new Error('No se pudo obtener el usuario');
   }
-  
+
   const user = await userRes.json();
 
   const res = await fetch(`${import.meta.env.STRAPI_URL}/api/pedidos`, {
@@ -119,21 +119,21 @@ export async function getPedidosUsuario(token: string) {
   });
 
   if (!res.ok) return [];
-  
+
   const data = await res.json();
   return data.data || [];
 }
 
 export function getStrapiImageUrl(imagen: any): string {
   if (!imagen) return '/placeholder.svg';
-  
+
   const url = imagen.url || imagen.formats?.small?.url || imagen.formats?.thumbnail?.url;
-  
+
   if (!url) return '/placeholder.svg';
-  
+
   // Si la URL ya es absoluta, devolverla tal cual
   if (url.startsWith('http')) return url;
-  
+
   // Si no, agregar la URL de Strapi
   return `${import.meta.env.STRAPI_URL}${url}`;
 }
@@ -142,7 +142,7 @@ export function getStrapiImageUrl(imagen: any): string {
 
 export async function getUsuariosPendientes(token: string) {
   const res = await fetch(
-    `${import.meta.env.STRAPI_URL}/api/users?filters[validado_por_admin][$eq]=false&populate=*`,
+    `${import.meta.env.STRAPI_URL}/api/users?filters[estado][$eq]=pendiente&populate=*`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -165,20 +165,20 @@ export async function getAllPedidos(token: string) {
   );
 
   if (!res.ok) return [];
-  
+
   const data = await res.json();
   return data.data || [];
 }
 
-export async function validarUsuario(token: string, userId: number | string) {
-  const res = await fetch(`${import.meta.env.STRAPI_URL}/api/users/${userId}`, {
+export async function validarUsuario(token: string, userId: number | string, lista_precios: string) {
+  const res = await fetch(`${import.meta.env.STRAPI_URL}/api/user-validation/${userId}/approve`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      validado_por_admin: true,
+      lista_precios,
     }),
   });
 
@@ -191,9 +191,8 @@ export async function validarUsuario(token: string, userId: number | string) {
 }
 
 export async function rechazarUsuario(token: string, userId: number | string) {
-  // Rechazar = eliminar usuario
-  const res = await fetch(`${import.meta.env.STRAPI_URL}/api/users/${userId}`, {
-    method: 'DELETE',
+  const res = await fetch(`${import.meta.env.STRAPI_URL}/api/user-validation/${userId}/reject`, {
+    method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -208,8 +207,8 @@ export async function rechazarUsuario(token: string, userId: number | string) {
 }
 
 export async function actualizarEstadoPedido(
-  token: string, 
-  pedidoId: number | string, 
+  token: string,
+  pedidoId: number | string,
   estado: string
 ) {
   const res = await fetch(`${import.meta.env.STRAPI_URL}/api/pedidos/${pedidoId}`, {

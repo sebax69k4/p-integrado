@@ -6,7 +6,7 @@ import fetchApi from '../lib/strapi';
 import type { Producto } from '../lib/types';
 
 const user = Astro.locals.user;
-const showPrice = user?.validado_por_admin ?? false;
+const showPrice = user?.validado_por_admin === true;
 
 // Obtener filtro de familia de la URL
 const familia = Astro.url.searchParams.get('familia');
@@ -37,6 +37,7 @@ try {
   console.error("Error fetching products:", error);
   products = [];
 }
+const userPriceList = user?.lista_precios || 'estandar';
 ---
 
 <MainLayout title="Catálogo | EcoFort">
@@ -46,7 +47,7 @@ try {
   </div>
   
   {products.length > 0 ? (
-    <ProductGrid products={products} showPrice={showPrice} />
+    <ProductGrid products={products} showPrice={showPrice} priceList={userPriceList} />
   ) : (
     <div class="text-center py-12">
       <p class="text-gray-500">No hay productos disponibles en este momento.</p>

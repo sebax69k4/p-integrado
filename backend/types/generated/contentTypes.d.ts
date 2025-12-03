@@ -430,6 +430,43 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiEstadoPedidoEstadoPedido
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'estado_pedidos';
+  info: {
+    description: 'Historial de estados de pedidos';
+    displayName: 'Estado Pedido';
+    pluralName: 'estado-pedidos';
+    singularName: 'estado-pedido';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    comentario: Schema.Attribute.Text;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    estado: Schema.Attribute.Enumeration<
+      ['Recibido', 'En preparacion', 'Facturado', 'Despachado']
+    > &
+      Schema.Attribute.Required;
+    fecha_cambio: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::estado-pedido.estado-pedido'
+    > &
+      Schema.Attribute.Private;
+    pedido: Schema.Attribute.Relation<'manyToOne', 'api::pedido.pedido'>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    usuario_responsable: Schema.Attribute.String;
+  };
+}
+
 export interface ApiPedidoPedido extends Struct.CollectionTypeSchema {
   collectionName: 'pedidos';
   info: {
@@ -446,10 +483,16 @@ export interface ApiPedidoPedido extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     direccion_envio: Schema.Attribute.String & Schema.Attribute.Required;
-    estado: Schema.Attribute.Enumeration<['Recibido', 'Despachado']> &
+    estado: Schema.Attribute.Enumeration<
+      ['Recibido', 'En preparacion', 'Facturado', 'Despachado']
+    > &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'Recibido'>;
     fecha_pedido: Schema.Attribute.DateTime;
+    historial_estados: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::estado-pedido.estado-pedido'
+    >;
     items: Schema.Attribute.JSON & Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -505,6 +548,13 @@ export interface ApiProductoProducto extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     nombre: Schema.Attribute.String & Schema.Attribute.Required;
+    precio_empresa: Schema.Attribute.Decimal &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
     precio_estandar: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
@@ -1000,7 +1050,11 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    estado: Schema.Attribute.Enumeration<['pendiente', 'activo', 'rechazado']> &
+      Schema.Attribute.DefaultTo<'pendiente'>;
     giro: Schema.Attribute.String;
+    lista_precios: Schema.Attribute.Enumeration<['estandar', 'empresa']> &
+      Schema.Attribute.DefaultTo<'estandar'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1021,7 +1075,9 @@ export interface PluginUsersPermissionsUser
       'manyToOne',
       'plugin::users-permissions.role'
     >;
-    rut: Schema.Attribute.String & Schema.Attribute.Required;
+    rut: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
     telefono: Schema.Attribute.String & Schema.Attribute.Required;
     tipo_persona: Schema.Attribute.Enumeration<['Natural', 'Empresa']> &
       Schema.Attribute.Required &
@@ -1051,6 +1107,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::estado-pedido.estado-pedido': ApiEstadoPedidoEstadoPedido;
       'api::pedido.pedido': ApiPedidoPedido;
       'api::producto.producto': ApiProductoProducto;
       'plugin::content-releases.release': PluginContentReleasesRelease;

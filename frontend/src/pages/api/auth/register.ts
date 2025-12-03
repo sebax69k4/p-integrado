@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (!data[field as keyof RegisterData]) {
       return new Response(JSON.stringify({
         error: `El campo ${field} es requerido`
-      }), { 
+      }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -50,14 +50,14 @@ export const POST: APIRoute = async ({ request }) => {
   if (data.password.length < 6) {
     return new Response(JSON.stringify({
       error: 'La contraseña debe tener al menos 6 caracteres'
-    }), { 
+    }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
   try {
-    const res = await fetch(`${import.meta.env.STRAPI_URL}/api/auth/local/register`, {
+    const res = await fetch(`${import.meta.env.STRAPI_URL}/api/custom-auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,8 @@ export const POST: APIRoute = async ({ request }) => {
         direccion: data.direccion,
         telefono: data.telefono,
         tipo_persona: data.tipo_persona,
-        validado_por_admin: false
+        validado_por_admin: false,
+        estado: 'pendiente'
       }),
     });
 
@@ -80,16 +81,16 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (responseData.error) {
       let errorMessage = 'Error al registrar';
-      
+
       if (responseData.error.message) {
         errorMessage = responseData.error.message;
       } else if (responseData.error.details?.errors) {
         errorMessage = responseData.error.details.errors.map((e: any) => e.message).join(', ');
       }
-      
+
       return new Response(JSON.stringify({
         error: errorMessage
-      }), { 
+      }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -102,7 +103,7 @@ export const POST: APIRoute = async ({ request }) => {
         username: responseData.user.username,
         email: responseData.user.email,
       }
-    }), { 
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -110,7 +111,7 @@ export const POST: APIRoute = async ({ request }) => {
     console.error('Registration error:', error);
     return new Response(JSON.stringify({
       error: 'Error de conexión con el servidor'
-    }), { 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

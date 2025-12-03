@@ -1,10 +1,22 @@
 'use strict';
 
+/**
+ * Helper para verificar si el servicio de email está disponible
+ */
+function isEmailConfigured() {
+  return strapi.plugins?.email?.services?.email?.send;
+}
+
 module.exports = {
   /**
    * Envía email de bienvenida a usuario validado
    */
   async sendUserValidatedEmail(user) {
+    if (!isEmailConfigured()) {
+      strapi.log.warn('Email no configurado - saltando envío de email de validación');
+      return;
+    }
+    
     try {
       await strapi.plugins['email'].services.email.send({
         to: user.email,
@@ -44,6 +56,11 @@ module.exports = {
    * Envía email de nuevo pedido al cliente
    */
   async sendNewOrderEmail(pedido, user) {
+    if (!isEmailConfigured()) {
+      strapi.log.warn('Email no configurado - saltando envío de email de nuevo pedido');
+      return;
+    }
+    
     try {
       const itemsHtml = (pedido.items || []).map(item => `
         <tr>
@@ -110,6 +127,11 @@ module.exports = {
    * Envía email cuando cambia el estado del pedido
    */
   async sendOrderStatusEmail(pedido, user, nuevoEstado) {
+    if (!isEmailConfigured()) {
+      strapi.log.warn('Email no configurado - saltando envío de email de estado');
+      return;
+    }
+    
     const estadoMessages = {
       'En preparacion': 'Tu pedido está siendo preparado.',
       'Facturado': 'Tu pedido ha sido facturado y está listo para despacho.',

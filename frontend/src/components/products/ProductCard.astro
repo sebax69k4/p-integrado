@@ -6,11 +6,16 @@ import type { Producto } from '../../lib/types';
 interface Props {
   product: Producto;
   showPrice?: boolean;
+  priceList?: 'estandar' | 'empresa';
 }
 
-const { product, showPrice = false } = Astro.props;
+const { product, showPrice = false, priceList = 'estandar' } = Astro.props;
 const imageUrl = getStrapiImageUrl(product.imagen);
 const productId = product.documentId || String(product.id);
+
+const displayPrice = priceList === 'empresa' && product.precio_empresa 
+  ? product.precio_empresa 
+  : product.precio_estandar;
 ---
 <div class="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow bg-white">
   <a href={`/producto/${productId}`}>
@@ -30,13 +35,13 @@ const productId = product.documentId || String(product.id);
   
   {showPrice ? (
     <div class="flex justify-between items-center">
-      <span class="text-xl font-bold text-blue-600">{formatCurrency(product.precio_estandar)}</span>
+      <span class="text-xl font-bold text-blue-600">{formatCurrency(displayPrice)}</span>
       <button 
         class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors add-to-cart-btn"
         data-id={productId}
         data-nombre={product.nombre}
         data-sku={product.sku}
-        data-precio={product.precio_estandar}
+        data-precio={displayPrice}
         data-imagen={imageUrl}
       >
         Agregar

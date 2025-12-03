@@ -17,6 +17,8 @@ declare namespace App {
       direccion?: string;
       telefono?: string;
       tipo_persona?: 'Natural' | 'Empresa';
+      estado?: 'pendiente' | 'activo' | 'rechazado';
+      lista_precios?: 'estandar' | 'empresa';
       role?: {
         name: string;
         type: string;

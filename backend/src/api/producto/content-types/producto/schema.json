@@ -28,7 +28,9 @@
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "stock": {
       "type": "integer",
@@ -37,12 +39,22 @@
     },
     "familia": {
       "type": "enumeration",
-      "enum": ["Papeleria", "Quimicos", "Limpieza", "EPP"],
+      "enum": [
+        "Papeleria",
+        "Quimicos",
+        "Limpieza",
+        "EPP"
+      ],
       "required": true
     },
     "precio_estandar": {
       "type": "decimal",
       "required": true,
+      "min": 0
+    },
+    "precio_empresa": {
+      "type": "decimal",
+      "required": false,
       "min": 0
     }
   }

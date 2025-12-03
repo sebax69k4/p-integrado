@@ -27,6 +27,7 @@ export interface Producto {
   stock: number;
   familia: Familia;
   precio_estandar: number;
+  precio_empresa?: number;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
@@ -49,6 +50,8 @@ export interface User {
   telefono: string;
   tipo_persona: TipoPersona;
   validado_por_admin: boolean;
+  estado: 'pendiente' | 'activo' | 'rechazado';
+  lista_precios: 'estandar' | 'empresa';
   role?: {
     id: number;
     name: string;

@@ -67,7 +67,8 @@
     },
     "rut": {
       "type": "string",
-      "required": true
+      "required": true,
+      "unique": true
     },
     "razon_social": {
       "type": "string",
@@ -86,13 +87,33 @@
     },
     "tipo_persona": {
       "type": "enumeration",
-      "enum": ["Natural", "Empresa"],
+      "enum": [
+        "Natural",
+        "Empresa"
+      ],
       "default": "Natural",
       "required": true
     },
     "validado_por_admin": {
       "type": "boolean",
       "default": false
+    },
+    "estado": {
+      "type": "enumeration",
+      "enum": [
+        "pendiente",
+        "activo",
+        "rechazado"
+      ],
+      "default": "pendiente"
+    },
+    "lista_precios": {
+      "type": "enumeration",
+      "enum": [
+        "estandar",
+        "empresa"
+      ],
+      "default": "estandar"
     },
     "pedidos": {
       "type": "relation",
