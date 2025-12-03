@@ -1,0 +1,49 @@
+{
+  "kind": "collectionType",
+  "collectionName": "productos",
+  "info": {
+    "singularName": "producto",
+    "pluralName": "productos",
+    "displayName": "Producto",
+    "description": "Catálogo de productos"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true
+    },
+    "descripcion": {
+      "type": "richtext"
+    },
+    "sku": {
+      "type": "string",
+      "unique": true,
+      "required": true
+    },
+    "imagen": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "stock": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "familia": {
+      "type": "enumeration",
+      "enum": ["Papeleria", "Quimicos", "Limpieza"],
+      "required": true
+    },
+    "precio_estandar": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    }
+  }
+}

@@ -1,0 +1,13 @@
+---
+import { FAMILIES } from '../../lib/constants';
+---
+<div class="flex gap-4 mb-8 overflow-x-auto pb-2">
+  <a href="/" class="px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 whitespace-nowrap">
+    Todos
+  </a>
+  {Object.values(FAMILIES).map((family) => (
+    <a href={`/?familia=${family}`} class="px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 whitespace-nowrap">
+      {family}
+    </a>
+  ))}
+</div>

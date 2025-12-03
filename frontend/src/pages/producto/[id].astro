@@ -1,0 +1,9 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+
+const { id } = Astro.params;
+---
+
+<MainLayout title={`Producto ${id} | EcoFort`}>
+  <h1>Producto {id}</h1>
+</MainLayout>

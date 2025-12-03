@@ -1,0 +1,25 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import ProductGrid from '../components/products/ProductGrid.astro';
+import CategoryFilter from '../components/products/CategoryFilter.astro';
+
+// Mock data for now
+const products = [
+  {
+    id: 1,
+    nombre: 'Producto Ejemplo',
+    descripcion: 'Descripción del producto ejemplo',
+    precio_estandar: 1000,
+    imagen: { url: 'https://via.placeholder.com/300' }
+  }
+];
+---
+
+<MainLayout title="Catálogo | EcoFort">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold mb-4">Nuestros Productos</h1>
+    <CategoryFilter />
+  </div>
+  
+  <ProductGrid products={products} />
+</MainLayout>

@@ -1,0 +1,36 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import CartItem from '../components/cart/CartItem.jsx';
+---
+
+<MainLayout title="Carrito | EcoFort">
+  <h1 class="text-2xl font-bold mb-8">Tu Carrito</h1>
+  
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2">
+      <!-- Cart items will be rendered here by a React component usually, but for now placeholder -->
+      <div class="bg-white p-6 rounded-lg shadow-sm">
+        <p class="text-gray-500 text-center py-8">Cargando carrito...</p>
+      </div>
+    </div>
+    
+    <div class="lg:col-span-1">
+      <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h2 class="text-lg font-semibold mb-4">Resumen</h2>
+        <div class="flex justify-between mb-2">
+          <span>Subtotal</span>
+          <span>$0</span>
+        </div>
+        <div class="border-t pt-4 mt-4">
+          <div class="flex justify-between font-bold text-lg">
+            <span>Total</span>
+            <span>$0</span>
+          </div>
+        </div>
+        <a href="/checkout" class="block w-full bg-blue-600 text-white text-center py-3 rounded mt-6 hover:bg-blue-700">
+          Proceder al Pago
+        </a>
+      </div>
+    </div>
+  </div>
+</MainLayout>

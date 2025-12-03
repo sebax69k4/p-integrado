@@ -1,0 +1,12 @@
+---
+import AuthLayout from '../layouts/AuthLayout.astro';
+import LoginForm from '../components/auth/LoginForm.astro';
+---
+
+<AuthLayout title="Iniciar Sesión | EcoFort">
+  <h2 class="text-xl font-semibold text-center mb-6">Bienvenido de nuevo</h2>
+  <LoginForm />
+  <p class="mt-4 text-center text-sm text-gray-600">
+    ¿No tienes cuenta? <a href="/registro" class="text-blue-600 hover:underline">Regístrate</a>
+  </p>
+</AuthLayout>
