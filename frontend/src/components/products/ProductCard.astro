@@ -16,7 +16,19 @@ const { product, showPrice = false } = Astro.props;
   {showPrice ? (
     <div class="flex justify-between items-center">
       <span class="text-xl font-bold text-blue-600">{formatCurrency(product.precio_estandar)}</span>
-      <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      <button 
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        onclick={`
+          window.dispatchEvent(new CustomEvent('add-to-cart', { 
+            detail: { 
+              id: '${product.documentId || product.id}', 
+              name: '${product.nombre}', 
+              price: ${product.precio_estandar}, 
+              image: '${import.meta.env.STRAPI_URL}${product.imagen?.url || ''}' 
+            } 
+          }))
+        `}
+      >
         Agregar
       </button>
     </div>
@@ -26,3 +38,18 @@ const { product, showPrice = false } = Astro.props;
     </div>
   )}
 </div>
+
+<script>
+  import { addCartItem } from '../../stores/cartStore';
+
+  window.addEventListener('add-to-cart', (e: any) => {
+    addCartItem({
+      ...e.detail,
+      quantity: 1
+    });
+    // Opcional: Abrir el carrito
+    import('../../stores/cartStore').then(({ isCartOpen }) => {
+      isCartOpen.set(true);
+    });
+  });
+</script>

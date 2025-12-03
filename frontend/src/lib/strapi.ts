@@ -43,3 +43,18 @@ export default async function fetchApi<T>({
 
   return data as T;
 }
+
+export async function getUserMe(token: string) {
+  if (!token) return null;
+  try {
+    const res = await fetch(`${import.meta.env.STRAPI_URL}/api/users/me?populate=role`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    return null;
+  }
+}

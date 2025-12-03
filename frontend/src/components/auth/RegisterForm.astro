@@ -2,17 +2,55 @@
 import Button from '../common/Button.astro';
 ---
 <form class="space-y-4 max-w-md mx-auto" method="POST" action="/api/auth/register">
-  <div>
-    <label for="username" class="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
-    <input type="text" id="username" name="username" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label for="username" class="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
+      <input type="text" id="username" name="username" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+    </div>
+    <div>
+      <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+      <input type="email" id="email" name="email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+    </div>
   </div>
-  <div>
-    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-    <input type="email" id="email" name="email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
-  </div>
+
   <div>
     <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
     <input type="password" id="password" name="password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
   </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label for="rut" class="block text-sm font-medium text-gray-700">RUT</label>
+      <input type="text" id="rut" name="rut" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+    </div>
+    <div>
+      <label for="telefono" class="block text-sm font-medium text-gray-700">Teléfono</label>
+      <input type="tel" id="telefono" name="telefono" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+    </div>
+  </div>
+
+  <div>
+    <label for="razon_social" class="block text-sm font-medium text-gray-700">Razón Social</label>
+    <input type="text" id="razon_social" name="razon_social" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+  </div>
+
+  <div>
+    <label for="giro" class="block text-sm font-medium text-gray-700">Giro</label>
+    <input type="text" id="giro" name="giro" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+  </div>
+
+  <div>
+    <label for="direccion" class="block text-sm font-medium text-gray-700">Dirección</label>
+    <input type="text" id="direccion" name="direccion" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+  </div>
+
+  <div>
+    <label for="tipo_persona" class="block text-sm font-medium text-gray-700">Tipo de Persona</label>
+    <select id="tipo_persona" name="tipo_persona" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+      <option value="Natural">Natural</option>
+      <option value="Empresa">Empresa</option>
+    </select>
+  </div>
+
   <Button type="submit" class="w-full">Registrarse</Button>
 </form>

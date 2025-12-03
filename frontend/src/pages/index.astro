@@ -2,17 +2,29 @@
 import MainLayout from '../layouts/MainLayout.astro';
 import ProductGrid from '../components/products/ProductGrid.astro';
 import CategoryFilter from '../components/products/CategoryFilter.astro';
+import fetchApi from '../lib/strapi';
 
-// Mock data for now
-const products = [
-  {
-    id: 1,
-    nombre: 'Producto Ejemplo',
-    descripcion: 'Descripción del producto ejemplo',
-    precio_estandar: 1000,
-    imagen: { url: 'https://via.placeholder.com/300' }
+const user = Astro.locals.user;
+const showPrice = user?.validado_por_admin ?? false;
+
+// Fetch products from Strapi
+let products: any[] = [];
+try {
+  products = await fetchApi<any[]>({
+    endpoint: 'productos',
+    wrappedByKey: 'data',
+    query: {
+      populate: 'imagen'
+    }
+  }) || [];
+  
+  if (!Array.isArray(products)) {
+    products = [];
   }
-];
+} catch (error) {
+  console.error("Error fetching products:", error);
+  products = [];
+}
 ---
 
 <MainLayout title="Catálogo | EcoFort">
@@ -21,5 +33,11 @@ const products = [
     <CategoryFilter />
   </div>
   
-  <ProductGrid products={products} />
+  {products.length > 0 ? (
+    <ProductGrid products={products} showPrice={showPrice} />
+  ) : (
+    <div class="text-center py-12">
+      <p class="text-gray-500">No hay productos disponibles en este momento.</p>
+    </div>
+  )}
 </MainLayout>

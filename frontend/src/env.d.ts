@@ -3,3 +3,18 @@
 interface ImportMetaEnv {
   readonly STRAPI_URL: string;
 }
+
+declare namespace App {
+  interface Locals {
+    user: {
+      id: number;
+      username: string;
+      email: string;
+      validado_por_admin: boolean;
+      role: {
+        name: string;
+        type: string;
+      };
+    } | null;
+  }
+}

@@ -80,6 +80,10 @@
       "type": "string",
       "required": true
     },
+    "telefono": {
+      "type": "string",
+      "required": true
+    },
     "tipo_persona": {
       "type": "enumeration",
       "enum": ["Natural", "Empresa"],

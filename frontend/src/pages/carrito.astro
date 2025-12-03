@@ -1,36 +1,76 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
-import CartItem from '../components/cart/CartItem.jsx';
+import CartList from '../components/cart/CartList.jsx';
+import { formatCurrency } from '../lib/utils';
+
+const MIN_ORDER_AMOUNT = 35000;
 ---
 
 <MainLayout title="Carrito | EcoFort">
   <h1 class="text-2xl font-bold mb-8">Tu Carrito</h1>
   
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8" id="cart-container">
     <div class="lg:col-span-2">
-      <!-- Cart items will be rendered here by a React component usually, but for now placeholder -->
-      <div class="bg-white p-6 rounded-lg shadow-sm">
-        <p class="text-gray-500 text-center py-8">Cargando carrito...</p>
-      </div>
+      <CartList client:only="react" />
     </div>
     
     <div class="lg:col-span-1">
-      <div class="bg-white p-6 rounded-lg shadow-sm">
+      <div class="bg-white p-6 rounded-lg shadow-sm sticky top-4">
         <h2 class="text-lg font-semibold mb-4">Resumen</h2>
         <div class="flex justify-between mb-2">
           <span>Subtotal</span>
-          <span>$0</span>
+          <span id="cart-subtotal">$0</span>
         </div>
         <div class="border-t pt-4 mt-4">
           <div class="flex justify-between font-bold text-lg">
             <span>Total</span>
-            <span>$0</span>
+            <span id="cart-total">$0</span>
           </div>
         </div>
-        <a href="/checkout" class="block w-full bg-blue-600 text-white text-center py-3 rounded mt-6 hover:bg-blue-700">
+        
+        <div id="min-order-warning" class="hidden mt-4 p-3 bg-red-100 text-red-700 text-sm rounded">
+          El monto mínimo de compra es {formatCurrency(MIN_ORDER_AMOUNT)}
+        </div>
+
+        <a href="/checkout" id="checkout-btn" class="block w-full bg-blue-600 text-white text-center py-3 rounded mt-6 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
           Proceder al Pago
         </a>
       </div>
     </div>
   </div>
+
+  <script>
+    import { cartItems, type CartItem } from '../stores/cartStore';
+    import { formatCurrency } from '../lib/utils';
+
+    const MIN_ORDER_AMOUNT = 35000;
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const warningMsg = document.getElementById('min-order-warning');
+    const subtotalEl = document.getElementById('cart-subtotal');
+    const totalEl = document.getElementById('cart-total');
+
+    function updateCartSummary() {
+      const items = cartItems.get() as CartItem[];
+      const total = items.reduce((acc: number, item: CartItem) => acc + (item.price * item.quantity), 0);
+      
+      if (subtotalEl) subtotalEl.textContent = formatCurrency(total);
+      if (totalEl) totalEl.textContent = formatCurrency(total);
+
+      if (total < MIN_ORDER_AMOUNT) {
+        checkoutBtn?.setAttribute('disabled', 'true');
+        checkoutBtn?.classList.add('pointer-events-none', 'opacity-50');
+        warningMsg?.classList.remove('hidden');
+      } else {
+        checkoutBtn?.removeAttribute('disabled');
+        checkoutBtn?.classList.remove('pointer-events-none', 'opacity-50');
+        warningMsg?.classList.add('hidden');
+      }
+    }
+
+    // Initial update
+    updateCartSummary();
+    
+    // Subscribe to changes
+    cartItems.subscribe(() => updateCartSummary());
+  </script>
 </MainLayout>

@@ -1019,6 +1019,7 @@ export interface PluginUsersPermissionsUser
       'plugin::users-permissions.role'
     >;
     rut: Schema.Attribute.String & Schema.Attribute.Required;
+    telefono: Schema.Attribute.String & Schema.Attribute.Required;
     tipo_persona: Schema.Attribute.Enumeration<['Natural', 'Empresa']> &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'Natural'>;
