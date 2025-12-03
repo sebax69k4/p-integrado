@@ -1,54 +1,69 @@
 ---
 import { formatCurrency } from '../../lib/utils';
+import { getStrapiImageUrl } from '../../lib/strapi';
+import type { Producto } from '../../lib/types';
 
 interface Props {
-  product: any;
+  product: Producto;
   showPrice?: boolean;
 }
 
 const { product, showPrice = false } = Astro.props;
+const imageUrl = getStrapiImageUrl(product.imagen);
+const productId = product.documentId || String(product.id);
 ---
-<div class="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-  <img src={product.imagen?.url} alt={product.nombre} class="w-full h-48 object-cover rounded-md mb-4" />
-  <h3 class="text-lg font-semibold mb-2">{product.nombre}</h3>
-  <p class="text-gray-600 text-sm mb-4 line-clamp-2">{product.descripcion}</p>
+<div class="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow bg-white">
+  <a href={`/producto/${productId}`}>
+    <img 
+      src={imageUrl} 
+      alt={product.nombre} 
+      class="w-full h-48 object-cover rounded-md mb-4"
+      onerror="this.src='/placeholder.svg'"
+    />
+  </a>
+  <span class="text-xs text-gray-500 uppercase tracking-wide">{product.familia}</span>
+  <a href={`/producto/${productId}`}>
+    <h3 class="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors">{product.nombre}</h3>
+  </a>
+  <p class="text-gray-600 text-sm mb-2">SKU: {product.sku}</p>
+  <p class="text-gray-500 text-sm mb-4">Stock: {product.stock} unidades</p>
   
   {showPrice ? (
     <div class="flex justify-between items-center">
       <span class="text-xl font-bold text-blue-600">{formatCurrency(product.precio_estandar)}</span>
       <button 
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        onclick={`
-          window.dispatchEvent(new CustomEvent('add-to-cart', { 
-            detail: { 
-              id: '${product.documentId || product.id}', 
-              name: '${product.nombre}', 
-              price: ${product.precio_estandar}, 
-              image: '${import.meta.env.STRAPI_URL}${product.imagen?.url || ''}' 
-            } 
-          }))
-        `}
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors add-to-cart-btn"
+        data-id={productId}
+        data-nombre={product.nombre}
+        data-sku={product.sku}
+        data-precio={product.precio_estandar}
+        data-imagen={imageUrl}
       >
         Agregar
       </button>
     </div>
   ) : (
     <div class="text-center p-2 bg-gray-100 rounded text-gray-600 text-sm">
-      Inicia sesión para ver precios
+      <a href="/login" class="hover:text-blue-600">Inicia sesión para ver precios</a>
     </div>
   )}
 </div>
 
 <script>
-  import { addCartItem } from '../../stores/cartStore';
+  import { addCartItem, isCartOpen } from '../../stores/cartStore';
 
-  window.addEventListener('add-to-cart', (e: any) => {
-    addCartItem({
-      ...e.detail,
-      quantity: 1
-    });
-    // Opcional: Abrir el carrito
-    import('../../stores/cartStore').then(({ isCartOpen }) => {
+  document.querySelectorAll('.add-to-cart-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const item = {
+        id: button.dataset.id!,
+        nombre: button.dataset.nombre!,
+        sku: button.dataset.sku!,
+        precio: parseFloat(button.dataset.precio!),
+        imagen: button.dataset.imagen,
+      };
+      
+      addCartItem(item);
       isCartOpen.set(true);
     });
   });

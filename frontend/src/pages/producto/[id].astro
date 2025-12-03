@@ -1,9 +1,216 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
+import fetchApi, { getStrapiImageUrl } from '../../lib/strapi';
+import { formatCurrency } from '../../lib/utils';
+import type { Producto } from '../../lib/types';
 
 const { id } = Astro.params;
+const user = Astro.locals.user;
+const showPrice = user?.validado_por_admin ?? false;
+
+// Fetch single product from Strapi
+let product: Producto | null = null;
+try {
+  product = await fetchApi<Producto>({
+    endpoint: `productos/${id}`,
+    wrappedByKey: 'data',
+    query: {
+      'populate': 'imagen',
+    },
+  });
+} catch (error) {
+  console.error("Error fetching product:", error);
+}
+
+if (!product) {
+  return Astro.redirect('/404');
+}
+
+const imageUrl = getStrapiImageUrl(product.imagen);
+const productId = product.documentId || String(product.id);
 ---
 
-<MainLayout title={`Producto ${id} | EcoFort`}>
-  <h1>Producto {id}</h1>
+<MainLayout title={`${product.nombre} | EcoFort`}>
+  <div class="max-w-4xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="text-sm mb-6">
+      <a href="/" class="text-blue-600 hover:underline">Inicio</a>
+      <span class="mx-2 text-gray-400">/</span>
+      <a href={`/?familia=${encodeURIComponent(product.familia)}`} class="text-blue-600 hover:underline">{product.familia}</a>
+      <span class="mx-2 text-gray-400">/</span>
+      <span class="text-gray-600">{product.nombre}</span>
+    </nav>
+
+    <div class="grid md:grid-cols-2 gap-8">
+      <!-- Imagen -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <img 
+          src={imageUrl} 
+          alt={product.nombre}
+          class="w-full h-96 object-cover"
+          onerror="this.src='/placeholder.svg'"
+        />
+      </div>
+      
+      <!-- Detalles -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded uppercase tracking-wide mb-3">
+          {product.familia}
+        </span>
+        
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">{product.nombre}</h1>
+        <p class="text-gray-500 text-sm mb-4">SKU: {product.sku}</p>
+        
+        {product.descripcion && (
+          <div class="mb-6">
+            <h2 class="font-semibold text-gray-900 mb-2">Descripción</h2>
+            <p class="text-gray-600">{product.descripcion}</p>
+          </div>
+        )}
+        
+        <div class="flex items-center gap-2 mb-6">
+          <span class="font-semibold text-gray-900">Disponibilidad:</span>
+          {product.stock > 0 ? (
+            <span class="text-green-600">{product.stock} en stock</span>
+          ) : (
+            <span class="text-red-600">Sin stock</span>
+          )}
+        </div>
+        
+        {showPrice ? (
+          <div class="border-t pt-4">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-3xl font-bold text-blue-600">{formatCurrency(product.precio_estandar)}</span>
+            </div>
+            
+            {product.stock > 0 ? (
+              <div class="flex items-center gap-3">
+                <div class="flex items-center border rounded">
+                  <button 
+                    id="decrease-qty" 
+                    class="px-3 py-2 hover:bg-gray-100 transition-colors"
+                    type="button"
+                  >-</button>
+                  <input 
+                    type="number" 
+                    id="product-qty" 
+                    value="1" 
+                    min="1" 
+                    max={product.stock}
+                    class="w-16 text-center border-x py-2 focus:outline-none"
+                  />
+                  <button 
+                    id="increase-qty" 
+                    class="px-3 py-2 hover:bg-gray-100 transition-colors"
+                    type="button"
+                  >+</button>
+                </div>
+                <button 
+                  id="add-to-cart-btn"
+                  class="flex-1 bg-blue-600 text-white py-3 px-6 rounded font-semibold hover:bg-blue-700 transition-colors"
+                  data-id={productId}
+                  data-nombre={product.nombre}
+                  data-sku={product.sku}
+                  data-precio={product.precio_estandar}
+                  data-imagen={imageUrl}
+                  data-max={product.stock}
+                >
+                  Agregar al Carrito
+                </button>
+              </div>
+            ) : (
+              <button 
+                disabled 
+                class="w-full bg-gray-400 text-white py-3 px-6 rounded font-semibold cursor-not-allowed"
+              >
+                Sin Stock
+              </button>
+            )}
+          </div>
+        ) : (
+          <div class="border-t pt-4">
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+              {user ? (
+                <p class="text-yellow-800">
+                  Tu cuenta está pendiente de validación. Una vez aprobada podrás ver precios y realizar pedidos.
+                </p>
+              ) : (
+                <>
+                  <p class="text-yellow-800 mb-2">Inicia sesión para ver el precio</p>
+                  <a href="/login" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                    Iniciar Sesión
+                  </a>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
 </MainLayout>
+
+<script>
+  import { addCartItem, isCartOpen } from '../../stores/cartStore';
+
+  const qtyInput = document.getElementById('product-qty') as HTMLInputElement;
+  const decreaseBtn = document.getElementById('decrease-qty');
+  const increaseBtn = document.getElementById('increase-qty');
+  const addToCartBtn = document.getElementById('add-to-cart-btn');
+
+  if (qtyInput && decreaseBtn && increaseBtn) {
+    const max = parseInt(addToCartBtn?.dataset.max || '999');
+    
+    decreaseBtn.addEventListener('click', () => {
+      const current = parseInt(qtyInput.value) || 1;
+      if (current > 1) {
+        qtyInput.value = String(current - 1);
+      }
+    });
+    
+    increaseBtn.addEventListener('click', () => {
+      const current = parseInt(qtyInput.value) || 1;
+      if (current < max) {
+        qtyInput.value = String(current + 1);
+      }
+    });
+    
+    qtyInput.addEventListener('change', () => {
+      let value = parseInt(qtyInput.value) || 1;
+      if (value < 1) value = 1;
+      if (value > max) value = max;
+      qtyInput.value = String(value);
+    });
+  }
+
+  addToCartBtn?.addEventListener('click', () => {
+    const btn = addToCartBtn as HTMLButtonElement;
+    const qty = parseInt(qtyInput?.value || '1');
+    
+    const item = {
+      id: btn.dataset.id!,
+      nombre: btn.dataset.nombre!,
+      sku: btn.dataset.sku!,
+      precio: parseFloat(btn.dataset.precio!),
+      imagen: btn.dataset.imagen,
+    };
+    
+    // Agregar la cantidad indicada
+    for (let i = 0; i < qty; i++) {
+      addCartItem(item);
+    }
+    
+    isCartOpen.set(true);
+    
+    // Feedback visual
+    btn.textContent = '¡Agregado!';
+    btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+    btn.classList.add('bg-green-600');
+    
+    setTimeout(() => {
+      btn.textContent = 'Agregar al Carrito';
+      btn.classList.remove('bg-green-600');
+      btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+    }, 1500);
+  });
+</script>

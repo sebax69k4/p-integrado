@@ -4,6 +4,7 @@ import CartList from '../components/cart/CartList.jsx';
 import { formatCurrency } from '../lib/utils';
 
 const MIN_ORDER_AMOUNT = 35000;
+const user = Astro.locals.user;
 ---
 
 <MainLayout title="Carrito | EcoFort">
@@ -28,7 +29,7 @@ const MIN_ORDER_AMOUNT = 35000;
           </div>
         </div>
         
-        <div id="min-order-warning" class="hidden mt-4 p-3 bg-red-100 text-red-700 text-sm rounded">
+        <div id="min-order-warning" class="hidden mt-4 p-3 bg-yellow-100 text-yellow-700 text-sm rounded">
           El monto mínimo de compra es {formatCurrency(MIN_ORDER_AMOUNT)}
         </div>
 
@@ -51,12 +52,12 @@ const MIN_ORDER_AMOUNT = 35000;
 
     function updateCartSummary() {
       const items = cartItems.get() as CartItem[];
-      const total = items.reduce((acc: number, item: CartItem) => acc + (item.price * item.quantity), 0);
+      const total = items.reduce((acc: number, item: CartItem) => acc + (item.precio * item.cantidad), 0);
       
       if (subtotalEl) subtotalEl.textContent = formatCurrency(total);
       if (totalEl) totalEl.textContent = formatCurrency(total);
 
-      if (total < MIN_ORDER_AMOUNT) {
+      if (total < MIN_ORDER_AMOUNT && items.length > 0) {
         checkoutBtn?.setAttribute('disabled', 'true');
         checkoutBtn?.classList.add('pointer-events-none', 'opacity-50');
         warningMsg?.classList.remove('hidden');
@@ -64,6 +65,12 @@ const MIN_ORDER_AMOUNT = 35000;
         checkoutBtn?.removeAttribute('disabled');
         checkoutBtn?.classList.remove('pointer-events-none', 'opacity-50');
         warningMsg?.classList.add('hidden');
+      }
+
+      // Si no hay items, deshabilitar también
+      if (items.length === 0) {
+        checkoutBtn?.setAttribute('disabled', 'true');
+        checkoutBtn?.classList.add('pointer-events-none', 'opacity-50');
       }
     }
 

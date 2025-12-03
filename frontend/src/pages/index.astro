@@ -3,19 +3,31 @@ import MainLayout from '../layouts/MainLayout.astro';
 import ProductGrid from '../components/products/ProductGrid.astro';
 import CategoryFilter from '../components/products/CategoryFilter.astro';
 import fetchApi from '../lib/strapi';
+import type { Producto } from '../lib/types';
 
 const user = Astro.locals.user;
 const showPrice = user?.validado_por_admin ?? false;
 
+// Obtener filtro de familia de la URL
+const familia = Astro.url.searchParams.get('familia');
+
 // Fetch products from Strapi
-let products: any[] = [];
+let products: Producto[] = [];
 try {
-  products = await fetchApi<any[]>({
+  const query: Record<string, string> = {
+    'populate': 'imagen',
+    'pagination[pageSize]': '100',
+  };
+  
+  // Filtrar por familia si está presente
+  if (familia) {
+    query['filters[familia][$eq]'] = familia;
+  }
+
+  products = await fetchApi<Producto[]>({
     endpoint: 'productos',
     wrappedByKey: 'data',
-    query: {
-      populate: 'imagen'
-    }
+    query,
   }) || [];
   
   if (!Array.isArray(products)) {
@@ -30,7 +42,7 @@ try {
 <MainLayout title="Catálogo | EcoFort">
   <div class="mb-8">
     <h1 class="text-3xl font-bold mb-4">Nuestros Productos</h1>
-    <CategoryFilter />
+    <CategoryFilter currentFamily={familia} />
   </div>
   
   {products.length > 0 ? (

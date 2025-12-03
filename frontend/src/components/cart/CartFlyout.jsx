@@ -1,5 +1,6 @@
 import { useStore } from '@nanostores/react';
 import { isCartOpen, cartItems } from '../../stores/cartStore';
+import { formatCurrency } from '../../lib/utils';
 
 export default function CartFlyout() {
   const $isCartOpen = useStore(isCartOpen);
@@ -7,32 +8,55 @@ export default function CartFlyout() {
 
   if (!$isCartOpen) return null;
 
+  const total = $cartItems.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+
   return (
-    <div class="fixed inset-0 z-50 overflow-hidden">
-      <div class="absolute inset-0 bg-black bg-opacity-50" onClick={() => isCartOpen.set(false)} />
-      <div class="absolute inset-y-0 right-0 max-w-xs w-full bg-white shadow-xl flex flex-col">
-        <div class="p-4 border-b">
-          <h2 class="text-lg font-semibold">Carrito</h2>
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => isCartOpen.set(false)} />
+      <div className="absolute inset-y-0 right-0 max-w-xs w-full bg-white shadow-xl flex flex-col">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-lg font-semibold">Carrito ({$cartItems.length})</h2>
+          <button 
+            onClick={() => isCartOpen.set(false)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            ✕
+          </button>
         </div>
-        <div class="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4">
           {$cartItems.length === 0 ? (
-            <p class="text-gray-500 text-center">El carrito está vacío</p>
+            <p className="text-gray-500 text-center">El carrito está vacío</p>
           ) : (
-            <ul class="space-y-4">
+            <ul className="space-y-4">
               {$cartItems.map((item) => (
-                <li key={item.id} class="flex gap-4">
-                  <img src={item.image} alt={item.name} class="w-16 h-16 object-cover rounded" />
-                  <div>
-                    <h3 class="font-medium">{item.name}</h3>
-                    <p class="text-sm text-gray-500">Cant: {item.quantity}</p>
+                <li key={item.id} className="flex gap-4">
+                  <img 
+                    src={item.imagen || '/placeholder.svg'} 
+                    alt={item.nombre} 
+                    className="w-16 h-16 object-cover rounded"
+                    onError={(e) => { e.target.src = '/placeholder.svg'; }}
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-medium text-sm">{item.nombre}</h3>
+                    <p className="text-xs text-gray-500">SKU: {item.sku}</p>
+                    <p className="text-sm text-gray-600">Cant: {item.cantidad}</p>
+                    <p className="text-sm font-semibold text-blue-600">{formatCurrency(item.precio * item.cantidad)}</p>
                   </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
-        <div class="p-4 border-t">
-          <a href="/carrito" class="block w-full bg-blue-600 text-white text-center py-2 rounded hover:bg-blue-700">
+        <div className="p-4 border-t">
+          <div className="flex justify-between mb-3">
+            <span className="font-medium">Total:</span>
+            <span className="font-bold text-blue-600">{formatCurrency(total)}</span>
+          </div>
+          <a 
+            href="/carrito" 
+            className="block w-full bg-blue-600 text-white text-center py-2 rounded hover:bg-blue-700 transition-colors"
+            onClick={() => isCartOpen.set(false)}
+          >
             Ver Carrito
           </a>
         </div>

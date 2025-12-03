@@ -32,6 +32,17 @@
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
       "inversedBy": "pedidos"
+    },
+    "items": {
+      "type": "json",
+      "required": true
+    },
+    "direccion_envio": {
+      "type": "string",
+      "required": true
+    },
+    "fecha_pedido": {
+      "type": "datetime"
     }
   }
 }

@@ -445,9 +445,12 @@ export interface ApiPedidoPedido extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    direccion_envio: Schema.Attribute.String & Schema.Attribute.Required;
     estado: Schema.Attribute.Enumeration<['Recibido', 'Despachado']> &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'Recibido'>;
+    fecha_pedido: Schema.Attribute.DateTime;
+    items: Schema.Attribute.JSON & Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',

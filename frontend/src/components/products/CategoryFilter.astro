@@ -1,12 +1,30 @@
 ---
 import { FAMILIES } from '../../lib/constants';
+
+interface Props {
+  currentFamily?: string | null;
+}
+
+const { currentFamily } = Astro.props;
 ---
 <div class="flex gap-4 mb-8 overflow-x-auto pb-2">
-  <a href="/" class="px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 whitespace-nowrap">
+  <a 
+    href="/" 
+    class:list={[
+      "px-4 py-2 rounded-full whitespace-nowrap transition-colors",
+      !currentFamily ? "bg-blue-600 text-white" : "bg-gray-200 hover:bg-gray-300"
+    ]}
+  >
     Todos
   </a>
   {Object.values(FAMILIES).map((family) => (
-    <a href={`/?familia=${family}`} class="px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 whitespace-nowrap">
+    <a 
+      href={`/?familia=${family}`} 
+      class:list={[
+        "px-4 py-2 rounded-full whitespace-nowrap transition-colors",
+        currentFamily === family ? "bg-blue-600 text-white" : "bg-gray-200 hover:bg-gray-300"
+      ]}
+    >
       {family}
     </a>
   ))}

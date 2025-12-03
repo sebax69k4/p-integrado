@@ -1,8 +1,9 @@
 ---
 import ProductCard from './ProductCard.astro';
+import type { Producto } from '../../lib/types';
 
 interface Props {
-  products: any[];
+  products: Producto[];
   showPrice?: boolean;
 }
 

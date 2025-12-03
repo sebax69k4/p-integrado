@@ -11,7 +11,13 @@ declare namespace App {
       username: string;
       email: string;
       validado_por_admin: boolean;
-      role: {
+      rut?: string;
+      razon_social?: string;
+      giro?: string;
+      direccion?: string;
+      telefono?: string;
+      tipo_persona?: 'Natural' | 'Empresa';
+      role?: {
         name: string;
         type: string;
       };

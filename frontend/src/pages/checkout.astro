@@ -1,8 +1,233 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
+import { formatCurrency } from '../lib/utils';
+
+const user = Astro.locals.user;
+
+// Si no hay usuario, el middleware ya redirigió
 ---
 
 <MainLayout title="Checkout | EcoFort">
   <h1 class="text-2xl font-bold mb-8">Finalizar Compra</h1>
-  <!-- Checkout form implementation -->
+  
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2">
+      <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+        <h2 class="text-lg font-semibold mb-4">Información de Envío</h2>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Razón Social</label>
+            <input 
+              type="text" 
+              value={user?.razon_social || ''} 
+              disabled 
+              class="w-full p-3 border rounded-md bg-gray-50"
+            />
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">RUT</label>
+              <input 
+                type="text" 
+                value={user?.rut || ''} 
+                disabled 
+                class="w-full p-3 border rounded-md bg-gray-50"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+              <input 
+                type="text" 
+                value={user?.telefono || ''} 
+                disabled 
+                class="w-full p-3 border rounded-md bg-gray-50"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Dirección de Envío</label>
+            <input 
+              type="text" 
+              id="direccion-envio"
+              value={user?.direccion || ''} 
+              class="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Ingrese la dirección de envío"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h2 class="text-lg font-semibold mb-4">Resumen del Pedido</h2>
+        <div id="order-items" class="divide-y">
+          <p class="text-gray-500 py-4">Cargando productos...</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="lg:col-span-1">
+      <div class="bg-white p-6 rounded-lg shadow-sm sticky top-4">
+        <h2 class="text-lg font-semibold mb-4">Total a Pagar</h2>
+        
+        <div class="space-y-2 mb-4">
+          <div class="flex justify-between">
+            <span>Subtotal</span>
+            <span id="checkout-subtotal">$0</span>
+          </div>
+          <div class="flex justify-between text-sm text-gray-500">
+            <span>Envío</span>
+            <span>Por definir</span>
+          </div>
+        </div>
+        
+        <div class="border-t pt-4">
+          <div class="flex justify-between font-bold text-lg">
+            <span>Total</span>
+            <span id="checkout-total">$0</span>
+          </div>
+        </div>
+        
+        <button 
+          id="confirm-order-btn"
+          class="w-full bg-green-600 text-white py-3 rounded mt-6 hover:bg-green-700 transition-colors font-semibold"
+        >
+          Confirmar Pedido
+        </button>
+        
+        <p class="text-xs text-gray-500 mt-4 text-center">
+          Al confirmar, aceptas los términos y condiciones de compra.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="order-success-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+      <div class="text-center">
+        <div class="text-green-500 text-5xl mb-4">✓</div>
+        <h3 class="text-xl font-bold mb-2">¡Pedido Confirmado!</h3>
+        <p class="text-gray-600 mb-4">Tu pedido ha sido recibido y está siendo procesado.</p>
+        <p class="text-sm text-gray-500 mb-6">Número de ticket: <span id="ticket-number" class="font-mono font-bold"></span></p>
+        <a href="/dashboard" class="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+          Ver mis pedidos
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { cartItems, clearCart, type CartItem } from '../stores/cartStore';
+    import { formatCurrency } from '../lib/utils';
+
+    const orderItemsContainer = document.getElementById('order-items');
+    const subtotalEl = document.getElementById('checkout-subtotal');
+    const totalEl = document.getElementById('checkout-total');
+    const confirmBtn = document.getElementById('confirm-order-btn') as HTMLButtonElement;
+    const direccionInput = document.getElementById('direccion-envio') as HTMLInputElement;
+    const successModal = document.getElementById('order-success-modal');
+    const ticketNumberEl = document.getElementById('ticket-number');
+
+    function renderOrderItems() {
+      const items = cartItems.get() as CartItem[];
+      
+      if (items.length === 0) {
+        window.location.href = '/carrito';
+        return;
+      }
+
+      const total = items.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+      
+      if (subtotalEl) subtotalEl.textContent = formatCurrency(total);
+      if (totalEl) totalEl.textContent = formatCurrency(total);
+
+      if (orderItemsContainer) {
+        orderItemsContainer.innerHTML = items.map(item => `
+          <div class="flex justify-between items-center py-3">
+            <div class="flex items-center gap-3">
+              <img src="${item.imagen || '/placeholder.svg'}" alt="${item.nombre}" class="w-12 h-12 object-cover rounded" />
+              <div>
+                <p class="font-medium">${item.nombre}</p>
+                <p class="text-sm text-gray-500">SKU: ${item.sku} | Cant: ${item.cantidad}</p>
+              </div>
+            </div>
+            <span class="font-semibold">${formatCurrency(item.precio * item.cantidad)}</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    async function confirmOrder() {
+      const items = cartItems.get() as CartItem[];
+      const direccion = direccionInput?.value?.trim();
+
+      if (!direccion) {
+        alert('Por favor ingresa una dirección de envío');
+        direccionInput?.focus();
+        return;
+      }
+
+      if (items.length === 0) {
+        alert('El carrito está vacío');
+        return;
+      }
+
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Procesando...';
+
+      try {
+        const pedidoItems = items.map(item => ({
+          id: item.id,
+          nombre: item.nombre,
+          sku: item.sku,
+          precio_unitario: item.precio,
+          cantidad: item.cantidad,
+          subtotal: item.precio * item.cantidad,
+        }));
+
+        const total = pedidoItems.reduce((acc, item) => acc + item.subtotal, 0);
+
+        const response = await fetch('/api/pedidos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            items: pedidoItems,
+            total,
+            direccion_envio: direccion,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Error al crear el pedido');
+        }
+
+        // Mostrar modal de éxito
+        if (ticketNumberEl) ticketNumberEl.textContent = result.numero_ticket;
+        successModal?.classList.remove('hidden');
+        
+        // Limpiar carrito
+        clearCart();
+
+      } catch (error: any) {
+        alert(error.message || 'Error al procesar el pedido');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Confirmar Pedido';
+      }
+    }
+
+    // Initialize
+    renderOrderItems();
+    
+    // Subscribe to cart changes
+    cartItems.subscribe(() => renderOrderItems());
+    
+    // Handle confirm button
+    confirmBtn?.addEventListener('click', confirmOrder);
+  </script>
 </MainLayout>

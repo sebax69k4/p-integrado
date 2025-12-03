@@ -58,3 +58,82 @@ export async function getUserMe(token: string) {
     return null;
   }
 }
+
+export async function createPedido(token: string, pedidoData: {
+  items: Array<{
+    id: string;
+    nombre: string;
+    sku: string;
+    precio_unitario: number;
+    cantidad: number;
+    subtotal: number;
+  }>;
+  total: number;
+  direccion_envio: string;
+}) {
+  // Primero obtener el ID del usuario actual
+  const userRes = await fetch(`${import.meta.env.STRAPI_URL}/api/users/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (!userRes.ok) {
+    throw new Error('No se pudo obtener el usuario');
+  }
+  
+  const user = await userRes.json();
+
+  const res = await fetch(`${import.meta.env.STRAPI_URL}/api/pedidos`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      data: {
+        items: pedidoData.items,
+        total: pedidoData.total,
+        direccion_envio: pedidoData.direccion_envio,
+        numero_ticket: `PED-${Date.now()}`,
+        estado: 'Recibido',
+        fecha_pedido: new Date().toISOString(),
+        user: user.id, // Asociar al usuario actual
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error?.message || 'Error al crear pedido');
+  }
+
+  return await res.json();
+}
+
+export async function getPedidosUsuario(token: string) {
+  const res = await fetch(`${import.meta.env.STRAPI_URL}/api/pedidos?populate=*&sort=createdAt:desc`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) return [];
+  
+  const data = await res.json();
+  return data.data || [];
+}
+
+export function getStrapiImageUrl(imagen: any): string {
+  if (!imagen) return '/placeholder.svg';
+  
+  const url = imagen.url || imagen.formats?.small?.url || imagen.formats?.thumbnail?.url;
+  
+  if (!url) return '/placeholder.svg';
+  
+  // Si la URL ya es absoluta, devolverla tal cual
+  if (url.startsWith('http')) return url;
+  
+  // Si no, agregar la URL de Strapi
+  return `${import.meta.env.STRAPI_URL}${url}`;
+}
