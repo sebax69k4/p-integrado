@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   if (!email || !password) {
     return new Response(JSON.stringify({
       error: 'Email y contraseña son requeridos'
-    }), { 
+    }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     if (responseData.error) {
       return new Response(JSON.stringify({
         error: responseData.error.message || 'Credenciales inválidas'
-      }), { 
+      }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -57,15 +57,37 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       maxAge: 60 * 60 * 24 * 7, // 1 week
     });
 
+    // Fetch user role to determine redirect
+    let redirectUrl = '/';
+    try {
+      const userRes = await fetch(`${import.meta.env.STRAPI_URL}/api/users/me?populate=role`, {
+        headers: {
+          Authorization: `Bearer ${responseData.jwt}`,
+        },
+      });
+
+      if (userRes.ok) {
+        const userWithRole = await userRes.json();
+        // Check for admin role by type or name
+        if (userWithRole.role?.type === 'admin' || userWithRole.role?.name === 'Admin') {
+          redirectUrl = '/admin';
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching user role:', err);
+    }
+
     return new Response(JSON.stringify({
       success: true,
-      redirect: '/',
+      redirect: redirectUrl,
       user: {
         username: responseData.user.username,
         email: responseData.user.email,
         validado_por_admin: responseData.user.validado_por_admin,
+        estado: responseData.user.estado,
+        lista_precios: responseData.user.lista_precios,
       }
-    }), { 
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -73,7 +95,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     console.error('Login error:', error);
     return new Response(JSON.stringify({
       error: 'Error de conexión con el servidor'
-    }), { 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

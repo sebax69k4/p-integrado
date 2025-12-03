@@ -6,7 +6,7 @@ import fetchApi from '../lib/strapi';
 import type { Producto } from '../lib/types';
 
 const user = Astro.locals.user;
-const showPrice = user?.validado_por_admin === true;
+const showPrice = user?.estado === 'activo';
 
 // Obtener filtro de familia de la URL
 const familia = Astro.url.searchParams.get('familia');

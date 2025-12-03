@@ -8,7 +8,7 @@ const VALIDATED_USER_ROUTES = ['/carrito', '/checkout'];
 const AUTH_ONLY_ROUTES = ['/dashboard', '/pendiente'];
 
 // Rutas que requieren rol de administrador
-const ADMIN_ROUTES = ['/dashboard/admin'];
+const ADMIN_ROUTES = ['/dashboard/admin', '/admin'];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const token = context.cookies.get("jwt")?.value;
@@ -35,7 +35,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (!user) {
       return context.redirect("/login");
     }
-    if (!user.validado_por_admin) {
+    if (user.estado !== 'activo') {
       return context.redirect("/pendiente");
     }
   }
@@ -49,7 +49,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // 3. Página pendiente: redirigir si ya está validado
   if (pathname === "/pendiente") {
-    if (user && user.validado_por_admin) {
+    if (user && user.estado === 'activo') {
       return context.redirect("/");
     }
   }
@@ -57,7 +57,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // 4. Rutas de autenticación (login/registro): redirigir si ya está logueado
   if (pathname === "/login" || pathname === "/registro") {
     if (user) {
-      if (user.validado_por_admin) {
+      if (user.estado === 'activo') {
         return context.redirect("/");
       } else {
         return context.redirect("/pendiente");

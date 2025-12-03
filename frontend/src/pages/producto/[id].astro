@@ -6,7 +6,7 @@ import type { Producto } from '../../lib/types';
 
 const { id } = Astro.params;
 const user = Astro.locals.user;
-const showPrice = user?.validado_por_admin === true;
+const showPrice = user?.estado === 'activo';
 const userPriceList = user?.lista_precios || 'estandar';
 
 // Fetch single product from Strapi
