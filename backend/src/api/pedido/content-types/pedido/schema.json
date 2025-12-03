@@ -23,7 +23,7 @@
     },
     "estado": {
       "type": "enumeration",
-      "enum": ["Recibido", "Despachado"],
+      "enum": ["Recibido", "En preparacion", "Facturado", "Despachado"],
       "default": "Recibido",
       "required": true
     },
@@ -43,6 +43,12 @@
     },
     "fecha_pedido": {
       "type": "datetime"
+    },
+    "historial_estados": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::estado-pedido.estado-pedido",
+      "mappedBy": "pedido"
     }
   }
 }

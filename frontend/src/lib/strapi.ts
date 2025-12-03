@@ -137,3 +137,99 @@ export function getStrapiImageUrl(imagen: any): string {
   // Si no, agregar la URL de Strapi
   return `${import.meta.env.STRAPI_URL}${url}`;
 }
+
+// ==================== ADMIN FUNCTIONS ====================
+
+export async function getUsuariosPendientes(token: string) {
+  const res = await fetch(
+    `${import.meta.env.STRAPI_URL}/api/users?filters[validado_por_admin][$eq]=false&populate=*`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!res.ok) return [];
+  return await res.json();
+}
+
+export async function getAllPedidos(token: string) {
+  const res = await fetch(
+    `${import.meta.env.STRAPI_URL}/api/pedidos?populate=user&sort=createdAt:desc`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!res.ok) return [];
+  
+  const data = await res.json();
+  return data.data || [];
+}
+
+export async function validarUsuario(token: string, userId: number | string) {
+  const res = await fetch(`${import.meta.env.STRAPI_URL}/api/users/${userId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      validado_por_admin: true,
+    }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error?.message || 'Error al validar usuario');
+  }
+
+  return await res.json();
+}
+
+export async function rechazarUsuario(token: string, userId: number | string) {
+  // Rechazar = eliminar usuario
+  const res = await fetch(`${import.meta.env.STRAPI_URL}/api/users/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error?.message || 'Error al rechazar usuario');
+  }
+
+  return { success: true };
+}
+
+export async function actualizarEstadoPedido(
+  token: string, 
+  pedidoId: number | string, 
+  estado: string
+) {
+  const res = await fetch(`${import.meta.env.STRAPI_URL}/api/pedidos/${pedidoId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      data: {
+        estado,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error?.message || 'Error al actualizar estado');
+  }
+
+  return await res.json();
+}
+

@@ -1,0 +1,37 @@
+{
+  "kind": "collectionType",
+  "collectionName": "estado_pedidos",
+  "info": {
+    "singularName": "estado-pedido",
+    "pluralName": "estado-pedidos",
+    "displayName": "Estado Pedido",
+    "description": "Historial de estados de pedidos"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "estado": {
+      "type": "enumeration",
+      "enum": ["Recibido", "En preparacion", "Facturado", "Despachado"],
+      "required": true
+    },
+    "fecha_cambio": {
+      "type": "datetime",
+      "required": true
+    },
+    "comentario": {
+      "type": "text"
+    },
+    "usuario_responsable": {
+      "type": "string"
+    },
+    "pedido": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pedido.pedido",
+      "inversedBy": "historial_estados"
+    }
+  }
+}

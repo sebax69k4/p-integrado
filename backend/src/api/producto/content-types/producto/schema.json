@@ -37,7 +37,7 @@
     },
     "familia": {
       "type": "enumeration",
-      "enum": ["Papeleria", "Quimicos", "Limpieza"],
+      "enum": ["Papeleria", "Quimicos", "Limpieza", "EPP"],
       "required": true
     },
     "precio_estandar": {

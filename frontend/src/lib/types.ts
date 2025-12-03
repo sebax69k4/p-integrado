@@ -15,7 +15,7 @@ export interface StrapiImage {
   };
 }
 
-export type Familia = 'Papeleria' | 'Quimicos' | 'Limpieza';
+export type Familia = 'Papeleria' | 'Quimicos' | 'Limpieza' | 'EPP';
 
 export interface Producto {
   id: number;
@@ -57,7 +57,15 @@ export interface User {
   pedidos?: Pedido[];
 }
 
-export type EstadoPedido = 'Recibido' | 'Despachado';
+export type EstadoPedido = 'Recibido' | 'En preparacion' | 'Facturado' | 'Despachado';
+
+export interface EstadoPedidoHistorial {
+  id: number;
+  estado_anterior?: EstadoPedido;
+  estado_nuevo: EstadoPedido;
+  fecha_cambio: string;
+  nota?: string;
+}
 
 export interface PedidoItem {
   id: string;
@@ -78,6 +86,7 @@ export interface Pedido {
   direccion_envio: string;
   fecha_pedido: string;
   user?: User;
+  historial_estados?: EstadoPedidoHistorial[];
   createdAt: string;
   updatedAt: string;
 }

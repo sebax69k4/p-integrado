@@ -1,0 +1,150 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+---
+
+<MainLayout title="Stock / Laudus | Admin">
+  <h1 class="text-2xl font-bold mb-8">Panel de Administración</h1>
+  
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <aside class="space-y-2">
+      <a href="/dashboard/admin/validaciones" class="block p-3 hover:bg-gray-50 rounded text-gray-700">
+        Validar Usuarios
+      </a>
+      <a href="/dashboard/admin/pedidos" class="block p-3 hover:bg-gray-50 rounded text-gray-700">
+        Gestionar Pedidos
+      </a>
+      <a href="/dashboard/admin/stock" class="block p-3 bg-blue-50 text-blue-700 rounded font-medium">
+        Stock / Laudus
+      </a>
+      <hr class="my-4" />
+      <a href="/dashboard" class="block p-3 hover:bg-gray-50 rounded text-gray-500 text-sm">
+        ← Volver al Dashboard
+      </a>
+    </aside>
+    
+    <div class="md:col-span-3 space-y-6">
+      <!-- Importar Stock -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold mb-4">📤 Importar Stock desde Laudus</h2>
+        <p class="text-gray-600 mb-4">
+          Sube un archivo CSV exportado desde Laudus para actualizar el stock de productos.
+          El archivo debe contener las columnas: <code class="bg-gray-100 px-1">sku, stock</code>
+        </p>
+        
+        <form id="importForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-2">Archivo CSV</label>
+            <input 
+              type="file" 
+              name="csvFile" 
+              accept=".csv"
+              required
+              class="block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100"
+            />
+          </div>
+          <button 
+            type="submit" 
+            class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            Importar Stock
+          </button>
+        </form>
+        
+        <div id="importResult" class="mt-4 hidden">
+          <div class="p-4 rounded-lg">
+            <p id="importMessage"></p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Exportar Pedidos -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold mb-4">📥 Exportar Pedidos para Laudus</h2>
+        <p class="text-gray-600 mb-4">
+          Descarga un archivo CSV con los pedidos para importar en Laudus.
+        </p>
+        
+        <div class="flex flex-wrap gap-4">
+          <a 
+            href="/api/admin/exportar-pedidos?estado=Facturado"
+            class="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+          >
+            Exportar Facturados
+          </a>
+          <a 
+            href="/api/admin/exportar-pedidos"
+            class="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+          >
+            Exportar Todos
+          </a>
+        </div>
+      </div>
+      
+      <!-- Estadísticas rápidas -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold mb-4">📊 Formato de Archivos</h2>
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="font-medium mb-2">CSV de Importación (Stock)</h3>
+            <pre class="bg-gray-100 p-3 rounded text-sm overflow-x-auto">sku,stock
+PRD-001,150
+PRD-002,75
+PRD-003,200</pre>
+          </div>
+          <div>
+            <h3 class="font-medium mb-2">CSV de Exportación (Pedidos)</h3>
+            <pre class="bg-gray-100 p-3 rounded text-sm overflow-x-auto">ticket,cliente,rut,total,estado,fecha
+TKT-001,Empresa SA,12345678-9,50000,Facturado,2024-01-15</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  const importForm = document.getElementById('importForm') as HTMLFormElement;
+  const importResult = document.getElementById('importResult');
+  const importMessage = document.getElementById('importMessage');
+  
+  importForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(importForm);
+    
+    try {
+      const response = await fetch('/api/admin/importar-stock', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (importResult && importMessage) {
+        importResult.classList.remove('hidden');
+        
+        if (response.ok) {
+          importResult.querySelector('div')?.classList.remove('bg-red-100', 'text-red-800');
+          importResult.querySelector('div')?.classList.add('bg-green-100', 'text-green-800');
+          importMessage.textContent = `✓ ${result.message}. Productos actualizados: ${result.updated || 0}`;
+        } else {
+          importResult.querySelector('div')?.classList.remove('bg-green-100', 'text-green-800');
+          importResult.querySelector('div')?.classList.add('bg-red-100', 'text-red-800');
+          importMessage.textContent = `✗ Error: ${result.error || 'Error desconocido'}`;
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      if (importResult && importMessage) {
+        importResult.classList.remove('hidden');
+        importResult.querySelector('div')?.classList.add('bg-red-100', 'text-red-800');
+        importMessage.textContent = '✗ Error de conexión';
+      }
+    }
+  });
+</script>

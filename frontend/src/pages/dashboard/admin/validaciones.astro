@@ -1,0 +1,112 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+import { getUsuariosPendientes } from '../../../lib/strapi';
+
+const token = Astro.cookies.get('jwt')?.value;
+
+let usuariosPendientes: any[] = [];
+if (token) {
+  try {
+    usuariosPendientes = await getUsuariosPendientes(token);
+  } catch (error) {
+    console.error('Error fetching pending users:', error);
+  }
+}
+---
+
+<MainLayout title="Validación de Usuarios | Admin">
+  <h1 class="text-2xl font-bold mb-8">Panel de Administración</h1>
+  
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <aside class="space-y-2">
+      <a href="/dashboard/admin/validaciones" class="block p-3 bg-blue-50 text-blue-700 rounded font-medium">
+        Validar Usuarios
+      </a>
+      <a href="/dashboard/admin/pedidos" class="block p-3 hover:bg-gray-50 rounded text-gray-700">
+        Gestionar Pedidos
+      </a>
+      <a href="/dashboard/admin/stock" class="block p-3 hover:bg-gray-50 rounded text-gray-700">
+        Stock / Laudus
+      </a>
+      <hr class="my-4" />
+      <a href="/dashboard" class="block p-3 hover:bg-gray-50 rounded text-gray-500 text-sm">
+        ← Volver al Dashboard
+      </a>
+    </aside>
+    
+    <div class="md:col-span-3">
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold mb-6">Usuarios Pendientes de Validación</h2>
+        
+        {usuariosPendientes.length === 0 ? (
+          <div class="text-center py-12">
+            <p class="text-gray-500">No hay usuarios pendientes de validación.</p>
+          </div>
+        ) : (
+          <div class="space-y-4">
+            {usuariosPendientes.map((usuario: any) => (
+              <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div class="flex flex-wrap justify-between items-start gap-4">
+                  <div>
+                    <p class="font-bold text-lg">{usuario.nombre_empresa || usuario.username}</p>
+                    <p class="text-gray-600">{usuario.email}</p>
+                    <p class="text-sm text-gray-500">RUT: {usuario.rut || 'No especificado'}</p>
+                    <p class="text-sm text-gray-500">
+                      Registrado: {new Date(usuario.createdAt).toLocaleDateString('es-CL')}
+                    </p>
+                  </div>
+                  <div class="flex gap-2">
+                    <button
+                      data-action="validar"
+                      data-user-id={usuario.id}
+                      class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                    >
+                      ✓ Validar
+                    </button>
+                    <button
+                      data-action="rechazar"
+                      data-user-id={usuario.id}
+                      class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                    >
+                      ✗ Rechazar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  document.querySelectorAll('[data-action]').forEach(button => {
+    button.addEventListener('click', async (e) => {
+      const target = e.currentTarget as HTMLButtonElement;
+      const action = target.dataset.action;
+      const userId = target.dataset.userId;
+      
+      if (!confirm(`¿Estás seguro de ${action} este usuario?`)) return;
+      
+      try {
+        const endpoint = action === 'validar' ? '/api/admin/validar-usuario' : '/api/admin/rechazar-usuario';
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+        
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('Error al procesar la solicitud');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('Error de conexión');
+      }
+    });
+  });
+</script>

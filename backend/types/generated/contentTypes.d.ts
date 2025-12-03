@@ -494,7 +494,7 @@ export interface ApiProductoProducto extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     descripcion: Schema.Attribute.RichText;
     familia: Schema.Attribute.Enumeration<
-      ['Papeleria', 'Quimicos', 'Limpieza']
+      ['Papeleria', 'Quimicos', 'Limpieza', 'EPP']
     > &
       Schema.Attribute.Required;
     imagen: Schema.Attribute.Media<'images'>;
